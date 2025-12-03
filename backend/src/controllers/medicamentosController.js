@@ -11,11 +11,11 @@ export const getMedicamentos = async (req, res) => {
 };
 
 export const createMedicamento = async (req, res) => {
-    const { nombre, dosis, usuario_id } = req.body;
+    const { usuario_id, nombre, dosis, frecuencia, notas } = req.body;
     try {
         const result = await pool.query(
-            'INSERT INTO medicamento (nombre, dosis, usuario_id) VALUES ($1, $2, $3) RETURNING *;',
-            [nombre, dosis, usuario_id]
+            'INSERT INTO medicamento (usuario_id, nombre, dosis, frecuencia, notas) VALUES ($1, $2, $3, $4, $5) RETURNING *;',
+            [usuario_id, nombre, dosis, frecuencia, notas]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -26,11 +26,11 @@ export const createMedicamento = async (req, res) => {
 
 export const updateMedicamento = async (req, res) => {
     const { id } = req.params;
-    const { nombre, dosis } = req.body;
+    const { nombre, dosis, frecuencia, notas } = req.body;
     try {
         const result = await pool.query(
-            'UPDATE medicamento SET nombre = $1, dosis = $2 WHERE id = $3 RETURNING *;',
-            [nombre, dosis, id]
+            'UPDATE medicamento SET nombre = $1, dosis = $2, frecuencia = $3, notas = $4 WHERE id = $5 RETURNING *;',
+            [nombre, dosis, frecuencia, notas, id]
         );
         res.json(result.rows[0]);
     } catch (err) {

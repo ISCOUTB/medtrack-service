@@ -3,8 +3,8 @@ import usuariosRoutes from './routes/usuarios.js';
 import medicamentosRoutes from './routes/medicamentos.js';
 import tomasRoutes from './routes/tomas.js';
 import historialRoutes from './routes/historial.js';
-import swaggerUi from 'swagger-ui-express';
-import swaggerJsdoc from 'swagger-jsdoc';
+import authRoutes from './routes/auth.js';
+import { swaggerUi, swaggerSpec } from './config/swagger.js';
 
 const app = express();
 const PORT = process.env.APP_PORT || 3000;
@@ -15,29 +15,12 @@ app.use('/usuarios', usuariosRoutes);
 app.use('/medicamentos', medicamentosRoutes);
 app.use('/tomas', tomasRoutes);
 app.use('/historial', historialRoutes);
+app.use('/auth', authRoutes);
 
 app.get('/', (req, res) => {
     res.send('API MedTrack funcionando 🚀');
 });
 
-const swaggerOptions = {
-    definition: {
-        openapi: '3.0.0',
-        info: {
-            title: 'MedTrack API',
-            version: '1.0.0',
-            description: 'Documentación de la API MedTrack con Swagger/OpenAPI',
-        },
-        servers: [
-            {
-                url: 'http://localhost:3000',
-            },
-        ],
-    },
-    apis: ['./src/routes/*.js'],
-};
-
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.listen(PORT, () => {

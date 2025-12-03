@@ -1,5 +1,12 @@
 import express from 'express';
-import { getUsuarios, createUsuario, updateUsuario, deleteUsuario, getUsuarioMedicamentos, getUsuarioTomas } from '../controllers/usuariosController.js';
+import {
+    getUsuarios,
+    createUsuario,
+    updateUsuario, deleteUsuario,
+    getUsuarioMedicamentos,
+    getUsuarioTomas
+} from '../controllers/usuariosController.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -46,7 +53,7 @@ router.get('/', getUsuarios);
  *       201:
  *         description: Usuario creado
  */
-router.post('/', createUsuario);
+router.post('/', authenticateToken, createUsuario);
 
 /**
  * @swagger
@@ -75,7 +82,7 @@ router.post('/', createUsuario);
  *       200:
  *         description: Usuario actualizado
  */
-router.put('/:id', updateUsuario);
+router.put('/:id', authenticateToken, updateUsuario);
 
 /**
  * @swagger
@@ -93,7 +100,7 @@ router.put('/:id', updateUsuario);
  *       204:
  *         description: Usuario eliminado
  */
-router.delete('/:id', deleteUsuario);
+router.delete('/:id', authenticateToken, deleteUsuario);
 
 
 /**

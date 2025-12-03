@@ -1,5 +1,11 @@
 import express from 'express';
-import { getHistorial, createHistorial, updateHistorial, deleteHistorial } from '../controllers/historialController.js';
+import {
+    getHistorial,
+    createHistorial,
+    updateHistorial,
+    deleteHistorial
+} from '../controllers/historialController.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -43,7 +49,7 @@ router.get('/', getHistorial);
  *       201:
  *         description: Registro de historial creado
  */
-router.post('/', createHistorial);
+router.post('/', authenticateToken, createHistorial);
 
 /**
  * @swagger
@@ -70,7 +76,7 @@ router.post('/', createHistorial);
  *       200:
  *         description: Registro de historial actualizado
  */
-router.put('/:id', updateHistorial);
+router.put('/:id', authenticateToken, updateHistorial);
 
 /**
  * @swagger
@@ -88,7 +94,7 @@ router.put('/:id', updateHistorial);
  *       204:
  *         description: Registro de historial eliminado
  */
-router.delete('/:id', deleteHistorial);
+router.delete('/:id', authenticateToken, deleteHistorial);
 
 
 export default router;

@@ -11,11 +11,11 @@ export const getTomas = async (req, res) => {
 };
 
 export const createToma = async (req, res) => {
-    const { medicamento_id, fecha_hora, realizada } = req.body;
+    const { medicamento_id, fecha_programada } = req.body;
     try {
         const result = await pool.query(
-            'INSERT INTO toma (medicamento_id, fecha_hora, realizada) VALUES ($1, $2, $3) RETURNING *;',
-            [medicamento_id, fecha_hora, realizada]
+            'INSERT INTO toma (medicamento_id, fecha_programada) VALUES ($1, $2) RETURNING *;',
+            [medicamento_id, fecha_programada]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -26,11 +26,11 @@ export const createToma = async (req, res) => {
 
 export const updateToma = async (req, res) => {
     const { id } = req.params;
-    const { fecha_hora, realizada } = req.body;
+    const { fecha_programada } = req.body;
     try {
         const result = await pool.query(
-            'UPDATE toma SET fecha_hora = $1, realizada = $2 WHERE id = $3 RETURNING *;',
-            [fecha_hora, realizada, id]
+            'UPDATE toma SET fecha_programada = $1 WHERE id = $2 RETURNING *;',
+            [fecha_programada, id]
         );
         res.json(result.rows[0]);
     } catch (err) {
