@@ -49,3 +49,20 @@ export const deleteMedicamento = async (req, res) => {
         res.status(500).json({ error: 'Error al eliminar medicamento' });
     }
 };
+
+export const getMedicamentoTomas = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query(
+            `SELECT t.id, t.fecha_hora, t.realizada
+       FROM toma t
+       INNER JOIN medicamento m ON t.medicamento_id = m.id
+       WHERE m.id = $1;`,
+            [id]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error al obtener tomas del medicamento:', err);
+        res.status(500).json({ error: 'Error al obtener tomas del medicamento' });
+    }
+};

@@ -49,3 +49,37 @@ export const deleteUsuario = async (req, res) => {
         res.status(500).json({ error: 'Error al eliminar usuario' });
     }
 };
+
+export const getUsuarioMedicamentos = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query(
+            `SELECT m.id, m.nombre, m.dosis
+       FROM medicamento m
+       INNER JOIN usuario u ON m.usuario_id = u.id
+       WHERE u.id = $1;`,
+            [id]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error al obtener medicamentos del usuario:', err);
+        res.status(500).json({ error: 'Error al obtener medicamentos del usuario' });
+    }
+};
+
+export const getUsuarioTomas = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query(
+            `SELECT t.id, t.fecha_hora, t.realizada, m.nombre AS medicamento
+       FROM toma t
+       INNER JOIN medicamento m ON t.medicamento_id = m.id
+       WHERE m.usuario_id = $1;`,
+            [id]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error al obtener tomas del usuario:', err);
+        res.status(500).json({ error: 'Error al obtener tomas del usuario' });
+    }
+};

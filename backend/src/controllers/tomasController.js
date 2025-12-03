@@ -49,3 +49,20 @@ export const deleteToma = async (req, res) => {
         res.status(500).json({ error: 'Error al eliminar toma' });
     }
 };
+
+export const getTomaHistorial = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query(
+            `SELECT h.id, h.observacion, h.toma_id
+       FROM historial h
+       INNER JOIN toma t ON h.toma_id = t.id
+       WHERE t.id = $1;`,
+            [id]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error al obtener historial de la toma:', err);
+        res.status(500).json({ error: 'Error al obtener historial de la toma' });
+    }
+};
