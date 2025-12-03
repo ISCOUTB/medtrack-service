@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    container_name: medtrack_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: medtrack
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ../docs/sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ../docs/sql/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+volumes:
+  db_data:
