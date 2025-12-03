@@ -23,3 +23,29 @@ export const createMedicamento = async (req, res) => {
         res.status(500).json({ error: 'Error al crear medicamento' });
     }
 };
+
+export const updateMedicamento = async (req, res) => {
+    const { id } = req.params;
+    const { nombre, dosis } = req.body;
+    try {
+        const result = await pool.query(
+            'UPDATE medicamento SET nombre = $1, dosis = $2 WHERE id = $3 RETURNING *;',
+            [nombre, dosis, id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error al actualizar medicamento:', err);
+        res.status(500).json({ error: 'Error al actualizar medicamento' });
+    }
+};
+
+export const deleteMedicamento = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await pool.query('DELETE FROM medicamento WHERE id = $1;', [id]);
+        res.status(204).send();
+    } catch (err) {
+        console.error('Error al eliminar medicamento:', err);
+        res.status(500).json({ error: 'Error al eliminar medicamento' });
+    }
+};
