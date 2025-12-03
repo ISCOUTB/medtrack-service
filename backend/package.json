@@ -2,10 +2,10 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "Microservicio en Node.js + Express para gestionar medicamentos y tomas programadas.",
-  "main": "src/index.js",
+  "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "node src/server.js",
     "test-db": "node src/test-db.js",
     "test-query": "node src/test-query.js"
   },
