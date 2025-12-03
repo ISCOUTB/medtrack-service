@@ -11,11 +11,11 @@ export const getHistorial = async (req, res) => {
 };
 
 export const createHistorial = async (req, res) => {
-    const { toma_id, observacion } = req.body;
+    const { toma_id, fecha_real, cumplimiento } = req.body;
     try {
         const result = await pool.query(
-            'INSERT INTO historial (toma_id, observacion) VALUES ($1, $2) RETURNING *;',
-            [toma_id, observacion]
+            'INSERT INTO historial (toma_id, fecha_real, cumplimiento) VALUES ($1, $2, $3) RETURNING *;',
+            [toma_id, fecha_real, cumplimiento]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -26,11 +26,11 @@ export const createHistorial = async (req, res) => {
 
 export const updateHistorial = async (req, res) => {
     const { id } = req.params;
-    const { observacion } = req.body;
+    const { fecha_real, cumplimiento } = req.body;
     try {
         const result = await pool.query(
-            'UPDATE historial SET observacion = $1 WHERE id = $2 RETURNING *;',
-            [observacion, id]
+            'UPDATE historial SET fecha_real = $1, cumplimiento = $2 WHERE id = $3 RETURNING *;',
+            [fecha_real, cumplimiento, id]
         );
         res.json(result.rows[0]);
     } catch (err) {

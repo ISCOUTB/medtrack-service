@@ -1,5 +1,12 @@
 import express from 'express';
-import { getTomas, createToma, updateToma, deleteToma, getTomaHistorial } from '../controllers/tomasController.js';
+import {
+    getTomas,
+    createToma,
+    updateToma,
+    deleteToma,
+    getTomaHistorial
+} from '../controllers/tomasController.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -46,7 +53,7 @@ router.get('/', getTomas);
  *       201:
  *         description: Toma creada
  */
-router.post('/', createToma);
+router.post('/', authenticateToken, createToma);
 
 /**
  * @swagger
@@ -76,7 +83,7 @@ router.post('/', createToma);
  *       200:
  *         description: Toma actualizada
  */
-router.put('/:id', updateToma);
+router.put('/:id', authenticateToken, updateToma);
 
 /**
  * @swagger
@@ -94,7 +101,7 @@ router.put('/:id', updateToma);
  *       204:
  *         description: Toma eliminada
  */
-router.delete('/:id', deleteToma);
+router.delete('/:id', authenticateToken, deleteToma);
 
 /**
  * @swagger

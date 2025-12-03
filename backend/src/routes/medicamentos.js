@@ -1,5 +1,12 @@
 import express from 'express';
-import { getMedicamentos, createMedicamento, updateMedicamento, deleteMedicamento, getMedicamentoTomas } from '../controllers/medicamentosController.js';
+import {
+    getMedicamentos,
+    createMedicamento,
+    updateMedicamento,
+    deleteMedicamento,
+    getMedicamentoTomas
+} from '../controllers/medicamentosController.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -35,17 +42,21 @@ router.get('/', getMedicamentos);
  *           schema:
  *             type: object
  *             properties:
+ *               usuario_id:
+ *                 type: integer
  *               nombre:
  *                 type: string
  *               dosis:
  *                 type: string
- *               usuario_id:
- *                 type: integer
+ *               frecuencia:
+ *                 type: string
+ *               notas:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Medicamento creado
  */
-router.post('/', createMedicamento);
+router.post('/', authenticateToken, createMedicamento);
 
 /**
  * @swagger
@@ -74,7 +85,7 @@ router.post('/', createMedicamento);
  *       200:
  *         description: Medicamento actualizado
  */
-router.put('/:id', updateMedicamento);
+router.put('/:id', authenticateToken, updateMedicamento);
 
 /**
  * @swagger
@@ -92,7 +103,7 @@ router.put('/:id', updateMedicamento);
  *       204:
  *         description: Medicamento eliminado
  */
-router.delete('/:id', deleteMedicamento);
+router.delete('/:id', authenticateToken, deleteMedicamento);
 
 /**
  * @swagger
