@@ -23,3 +23,29 @@ export const createUsuario = async (req, res) => {
         res.status(500).json({ error: 'Error al crear usuario' });
     }
 };
+
+export const updateUsuario = async (req, res) => {
+    const { id } = req.params;
+    const { nombre, email } = req.body;
+    try {
+        const result = await pool.query(
+            'UPDATE usuario SET nombre = $1, email = $2 WHERE id = $3 RETURNING *;',
+            [nombre, email, id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error al actualizar usuario:', err);
+        res.status(500).json({ error: 'Error al actualizar usuario' });
+    }
+};
+
+export const deleteUsuario = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await pool.query('DELETE FROM usuario WHERE id = $1;', [id]);
+        res.status(204).send();
+    } catch (err) {
+        console.error('Error al eliminar usuario:', err);
+        res.status(500).json({ error: 'Error al eliminar usuario' });
+    }
+};
