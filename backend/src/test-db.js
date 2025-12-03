@@ -1,8 +1,8 @@
-import dotenv from 'dotenv';
-import pg from 'pg';
+import dotenv from "dotenv";
+import pkg from "pg";
 
 dotenv.config();
-const { Pool } = pg;
+const { Pool } = pkg;
 
 const pool = new Pool({
     host: process.env.DB_HOST,
@@ -12,13 +12,13 @@ const pool = new Pool({
     database: process.env.DB_NAME,
 });
 
-(async () => {
-    try {
-        const res = await pool.query('SELECT NOW()');
-        console.log('Conexión exitosa:', res.rows[0].now);
-    } catch (err) {
-        console.error('Error de conexión:', err.message);
-    } finally {
+pool.connect()
+    .then(client => {
+        console.log("Conexión exitosa:", new Date().toISOString());
+        client.release();
         pool.end();
-    }
-})();
+    })
+    .catch(err => {
+        console.error("Error de conexión:", err.message);
+        pool.end();
+    });

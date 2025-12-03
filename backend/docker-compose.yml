@@ -1,3 +1,4 @@
+# configurar postgres con usuario medtrack_user y contraseña medtrack_pass
 version: "3.9"
 services:
   db:
@@ -5,8 +6,8 @@ services:
     container_name: medtrack_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: medtrack_user
+      POSTGRES_PASSWORD: medtrack_pass
       POSTGRES_DB: medtrack
     ports:
       - "5432:5432"
