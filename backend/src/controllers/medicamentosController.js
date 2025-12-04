@@ -2,25 +2,28 @@ import { pool } from '../db/pool.js';
 
 export const getMedicamentos = async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM medicamento;');
+        const userId = req.user.id;
+        const result = await pool.query(
+            "SELECT * FROM medicamento WHERE usuario_id = $1",
+            [userId]
+        );
         res.json(result.rows);
     } catch (err) {
-        console.error('Error en consulta medicamentos:', err);
-        res.status(500).json({ error: 'Error al obtener medicamentos' });
+        res.status(500).json({ error: "Error al obtener medicamentos" });
     }
 };
 
 export const createMedicamento = async (req, res) => {
-    const { usuario_id, nombre, dosis, frecuencia, notas } = req.body;
     try {
+        const userId = req.user.id;
+        const { nombre, dosis } = req.body;
         const result = await pool.query(
-            'INSERT INTO medicamento (usuario_id, nombre, dosis, frecuencia, notas) VALUES ($1, $2, $3, $4, $5) RETURNING *;',
-            [usuario_id, nombre, dosis, frecuencia, notas]
+            "INSERT INTO medicamento (nombre, dosis, usuario_id) VALUES ($1, $2, $3) RETURNING *",
+            [nombre, dosis, userId]
         );
-        res.status(201).json(result.rows[0]);
+        res.json(result.rows[0]);
     } catch (err) {
-        console.error('Error al crear medicamento:', err);
-        res.status(500).json({ error: 'Error al crear medicamento' });
+        res.status(500).json({ error: "Error al crear medicamento" });
     }
 };
 

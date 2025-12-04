@@ -21,13 +21,13 @@ const router = express.Router();
  * @swagger
  * /medicamentos:
  *   get:
- *     summary: Obtener todos los medicamentos
+ *     summary: Obtener medicamentos del usuario autenticado
  *     tags: [Medicamentos]
  *     responses:
  *       200:
  *         description: Lista de medicamentos
  */
-router.get('/', getMedicamentos);
+router.get('/', authenticateToken, getMedicamentos);
 
 /**
  * @swagger
@@ -42,8 +42,6 @@ router.get('/', getMedicamentos);
  *           schema:
  *             type: object
  *             properties:
- *               usuario_id:
- *                 type: integer
  *               nombre:
  *                 type: string
  *               dosis:
@@ -62,7 +60,7 @@ router.post('/', authenticateToken, createMedicamento);
  * @swagger
  * /medicamentos/{id}:
  *   put:
- *     summary: Actualizar un medicamento por ID
+ *     summary: Actualizar un medicamento por ID (solo si pertenece al usuario)
  *     tags: [Medicamentos]
  *     parameters:
  *       - in: path
@@ -70,17 +68,6 @@ router.post('/', authenticateToken, createMedicamento);
  *         required: true
  *         schema:
  *           type: integer
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               nombre:
- *                 type: string
- *               dosis:
- *                 type: string
  *     responses:
  *       200:
  *         description: Medicamento actualizado
@@ -91,7 +78,7 @@ router.put('/:id', authenticateToken, updateMedicamento);
  * @swagger
  * /medicamentos/{id}:
  *   delete:
- *     summary: Eliminar un medicamento por ID
+ *     summary: Eliminar un medicamento por ID (solo si pertenece al usuario)
  *     tags: [Medicamentos]
  *     parameters:
  *       - in: path
@@ -109,7 +96,7 @@ router.delete('/:id', authenticateToken, deleteMedicamento);
  * @swagger
  * /medicamentos/{id}/tomas:
  *   get:
- *     summary: Obtener tomas asociadas a un medicamento
+ *     summary: Obtener tomas asociadas a un medicamento del usuario autenticado
  *     tags: [Medicamentos]
  *     parameters:
  *       - in: path
@@ -121,7 +108,6 @@ router.delete('/:id', authenticateToken, deleteMedicamento);
  *       200:
  *         description: Lista de tomas del medicamento
  */
-router.get('/:id/tomas', getMedicamentoTomas);
-
+router.get('/:id/tomas', authenticateToken, getMedicamentoTomas);
 
 export default router;

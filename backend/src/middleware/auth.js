@@ -1,15 +1,17 @@
-import jwt from 'jsonwebtoken';
+const jwt = require("jsonwebtoken");
 
-const SECRET = process.env.JWT_SECRET || 'supersecret';
+function authMiddleware(req, res, next) {
+    const header = req.headers["authorization"];
+    if (!header) return res.status(401).json({ error: "Token requerido" });
 
-export const authenticateToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Token requerido' });
-
-    jwt.verify(token, SECRET, (err, user) => {
-        if (err) return res.status(403).json({ error: 'Token inválido' });
-        req.user = user;
+    const token = header.split(" ")[1];
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
         next();
-    });
-};
+    } catch (err) {
+        return res.status(401).json({ error: "Token inválido" });
+    }
+}
+
+module.exports = authMiddleware;
