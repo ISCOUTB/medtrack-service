@@ -40,6 +40,9 @@ dependencies:
   jwt_decoder: ^2.0.1
   flutter_local_notifications: ^19.5.0
   timezone: ^0.10.1
+  intl: ^0.20.2
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:

@@ -11,14 +11,17 @@ CREATE TABLE IF NOT EXISTS medicamento (
     nombre VARCHAR(100) NOT NULL,
     dosis VARCHAR(50),
     frecuencia VARCHAR(50),
-    notas TEXT
+    notas TEXT,
+    detalles_frecuencia JSONB
 );
 
 CREATE TABLE IF NOT EXISTS toma (
     id SERIAL PRIMARY KEY,
     medicamento_id INT REFERENCES medicamento(id) ON DELETE CASCADE,
     fecha_programada TIMESTAMP NOT NULL,
-    tomada BOOLEAN DEFAULT FALSE
+    tomada BOOLEAN DEFAULT FALSE,
+    estado VARCHAR(20) DEFAULT 'PENDIENTE',
+    fecha_real TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS historial (
