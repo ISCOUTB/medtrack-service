@@ -42,19 +42,18 @@ class MedicationService with ChangeNotifier {
     String nombre,
     String dosis,
     String frecuencia,
-    String notas, {
+    String? notas, {
     Map<String, dynamic>? detallesFrecuencia,
   }) async {
-    if (token == null || userId == null) return null;
-
+    final url = Uri.parse(baseUrl);
     try {
       final response = await http.post(
-        Uri.parse(baseUrl),
+        url,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
+        body: json.encode({
           'usuario_id': userId,
           'nombre': nombre,
           'dosis': dosis,
@@ -65,17 +64,60 @@ class MedicationService with ChangeNotifier {
       );
 
       if (response.statusCode == 201) {
-        final newMedication = Medication.fromJson(jsonDecode(response.body));
-        _medications.add(newMedication);
+        final newMed = Medication.fromJson(json.decode(response.body));
+        _medications.add(newMed);
         notifyListeners();
-        return newMedication;
+        return newMed;
       } else {
-        debugPrint('Failed to add medication: ${response.body}');
+        print('Error adding medication: ${response.body}');
         return null;
       }
-    } catch (e) {
-      debugPrint('Error adding medication: $e');
+    } catch (error) {
+      print('Error adding medication: $error');
       return null;
+    }
+  }
+
+  Future<bool> updateMedication(
+    int id,
+    String nombre,
+    String dosis,
+    String frecuencia,
+    String? notas, {
+    Map<String, dynamic>? detallesFrecuencia,
+  }) async {
+    final url = Uri.parse('$baseUrl/$id');
+    try {
+      final response = await http.put(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'nombre': nombre,
+          'dosis': dosis,
+          'frecuencia': frecuencia,
+          'notas': notas,
+          'detalles_frecuencia': detallesFrecuencia,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final updatedMed = Medication.fromJson(json.decode(response.body));
+        final index = _medications.indexWhere((med) => med.id == id);
+        if (index != -1) {
+          _medications[index] = updatedMed;
+          notifyListeners();
+        }
+        return true;
+      } else {
+        print('Error updating medication: ${response.body}');
+        return false;
+      }
+    } catch (error) {
+      print('Error updating medication: $error');
+      return false;
     }
   }
 
@@ -132,6 +174,27 @@ class MedicationService with ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error fetching intakes: $e');
+      return [];
+    }
+  }
+
+  Future<List<dynamic>> fetchAllIntakes() async {
+    if (token == null || userId == null) return [];
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:3000/tomas/usuario/$userId'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        debugPrint('Failed to load all intakes: ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      debugPrint('Error fetching all intakes: $e');
       return [];
     }
   }

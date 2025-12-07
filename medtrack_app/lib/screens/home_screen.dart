@@ -5,6 +5,21 @@ import '../services/auth_service.dart';
 import '../services/medication_service.dart';
 import '../models/medication.dart';
 import 'add_medication_screen.dart';
+import 'history_screen.dart';
+
+class ScheduleItem {
+  final Medication medication;
+  final DateTime scheduledTime;
+  final String status; // 'PENDIENTE', 'TOMADO', 'OMITIDO'
+  final dynamic recordedIntake;
+
+  ScheduleItem({
+    required this.medication,
+    required this.scheduledTime,
+    required this.status,
+    this.recordedIntake,
+  });
+}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -79,11 +94,15 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _recordIntake(Medication med, String status) async {
+  Future<void> _recordIntake(
+    Medication med,
+    DateTime scheduledTime,
+    String status,
+  ) async {
     final success = await Provider.of<MedicationService>(
       context,
       listen: false,
-    ).recordIntake(med.id, status: status, scheduledTime: _selectedDate);
+    ).recordIntake(med.id, status: status, scheduledTime: scheduledTime);
 
     if (success) {
       if (!mounted) return;
@@ -103,6 +122,119 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _editMedication(Medication med) async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(builder: (ctx) => AddMedicationScreen(medication: med)),
+    );
+    if (result == true) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Medicamento actualizado correctamente'),
+            backgroundColor: Colors.teal,
+          ),
+        );
+        _loadData();
+      }
+    }
+  }
+
+  List<ScheduleItem> _generateSchedule(List<Medication> meds) {
+    List<ScheduleItem> schedule = [];
+
+    for (var med in meds) {
+      // Parse frequency details
+      List<TimeOfDay> times = [];
+      bool shouldInclude = false;
+
+      if (med.detallesFrecuencia != null) {
+        final type = med.detallesFrecuencia!['type'];
+        if (type == 'daily') {
+          shouldInclude = true;
+        } else if (type == 'specific_days') {
+          final days = List<int>.from(med.detallesFrecuencia!['days'] ?? []);
+          // weekday: 1=Mon, 7=Sun
+          if (days.contains(_selectedDate.weekday)) {
+            shouldInclude = true;
+          }
+        }
+
+        if (shouldInclude) {
+          final timeStrings = List<String>.from(
+            med.detallesFrecuencia!['times'] ?? [],
+          );
+          for (var t in timeStrings) {
+            final parts = t.split(':');
+            if (parts.length == 2) {
+              times.add(
+                TimeOfDay(
+                  hour: int.parse(parts[0]),
+                  minute: int.parse(parts[1]),
+                ),
+              );
+            }
+          }
+        }
+      } else {
+        // Legacy fallback or default
+        if (med.frecuencia.contains('Diariamente')) {
+          // If no details but text says daily, assume 8am?
+          // Better to not assume to avoid confusion.
+        }
+      }
+
+      // Generate items for each time
+      for (var time in times) {
+        final scheduledDateTime = DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          time.hour,
+          time.minute,
+        );
+
+        // Find if there's a recorded intake for this time
+        dynamic matchingIntake;
+        final intakes = _recordedIntakes[med.id] ?? [];
+
+        for (var intake in intakes) {
+          if (intake['fecha_programada'] != null) {
+            final intakeTime = DateTime.parse(
+              intake['fecha_programada'],
+            ).toLocal();
+            // Compare with minute precision
+            if (intakeTime.year == scheduledDateTime.year &&
+                intakeTime.month == scheduledDateTime.month &&
+                intakeTime.day == scheduledDateTime.day &&
+                intakeTime.hour == scheduledDateTime.hour &&
+                intakeTime.minute == scheduledDateTime.minute) {
+              matchingIntake = intake;
+              break;
+            }
+          }
+        }
+
+        String status = 'PENDIENTE';
+        if (matchingIntake != null) {
+          status = matchingIntake['estado'] ?? 'PENDIENTE';
+        }
+
+        schedule.add(
+          ScheduleItem(
+            medication: med,
+            scheduledTime: scheduledDateTime,
+            status: status,
+            recordedIntake: matchingIntake,
+          ),
+        );
+      }
+    }
+
+    // Sort by time
+    schedule.sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
+    return schedule;
   }
 
   Widget _buildDateHeader() {
@@ -141,16 +273,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildMedicationList(List<Medication> medications) {
-    if (medications.isEmpty) {
+  Widget _buildScheduleList(List<Medication> medications) {
+    final schedule = _generateSchedule(medications);
+
+    if (schedule.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.medication_outlined, size: 64, color: Colors.grey[400]),
+            Icon(Icons.event_busy, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
-              'No hay medicamentos. ¡Agrega uno!',
+              'No hay tomas programadas para hoy.',
               style: TextStyle(color: Colors.grey[600], fontSize: 16),
             ),
           ],
@@ -160,14 +294,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: medications.length,
+      itemCount: schedule.length,
       itemBuilder: (ctx, i) {
-        final med = medications[i];
-        final intakes = _recordedIntakes[med.id] ?? [];
-        final isTaken = intakes.any((t) => t['estado'] == 'TOMADO');
-        final isSkipped = intakes.any((t) => t['estado'] == 'OMITIDO');
+        final item = schedule[i];
+        final med = item.medication;
+        final isTaken = item.status == 'TOMADO';
+        final isSkipped = item.status == 'OMITIDO';
 
-        // Determine status display
         Color statusColor = Colors.grey;
         IconData statusIcon = Icons.circle_outlined;
         String statusText = 'Pendiente';
@@ -196,12 +329,44 @@ class _HomeScreenState extends State<HomeScreen> {
                   backgroundColor: statusColor.withOpacity(0.1),
                   child: Icon(Icons.medication, color: statusColor),
                 ),
-                title: Text(
-                  med.nombre,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
+                title: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        med.nombre,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    PopupMenuButton<String>(
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          _editMedication(med);
+                        }
+                      },
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<String>>[
+                            const PopupMenuItem<String>(
+                              value: 'edit',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.edit,
+                                    size: 20,
+                                    color: Colors.teal,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text('Editar'),
+                                ],
+                              ),
+                            ),
+                          ],
+                      child: const Icon(Icons.more_vert, color: Colors.grey),
+                    ),
+                  ],
                 ),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,17 +374,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.scale, size: 16, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Text(med.dosis),
-                        const SizedBox(width: 16),
                         const Icon(
                           Icons.access_time,
                           size: 16,
                           color: Colors.grey,
                         ),
                         const SizedBox(width: 4),
-                        Text(med.frecuencia),
+                        Text(
+                          DateFormat('HH:mm').format(item.scheduledTime),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 16),
+                        const Icon(Icons.scale, size: 16, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            med.dosis,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ],
                     ),
                     if (med.notas != null && med.notas!.isNotEmpty) ...[
@@ -230,6 +403,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Colors.grey[600],
                           fontStyle: FontStyle.italic,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ],
@@ -244,17 +419,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: statusColor.withOpacity(0.5)),
                   ),
-                  child: Row(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(statusIcon, size: 16, color: statusColor),
-                      const SizedBox(width: 4),
+                      const SizedBox(height: 2),
                       Text(
                         statusText,
                         style: TextStyle(
                           color: statusColor,
                           fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                          fontSize: 10,
                         ),
                       ),
                     ],
@@ -274,7 +450,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             foregroundColor: Colors.orange,
                             side: const BorderSide(color: Colors.orange),
                           ),
-                          onPressed: () => _recordIntake(med, 'OMITIDO'),
+                          onPressed: () =>
+                              _recordIntake(med, item.scheduledTime, 'OMITIDO'),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -285,7 +462,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: FilledButton.styleFrom(
                             backgroundColor: Colors.green,
                           ),
-                          onPressed: () => _recordIntake(med, 'TOMADO'),
+                          onPressed: () =>
+                              _recordIntake(med, item.scheduledTime, 'TOMADO'),
                         ),
                       ),
                     ],
@@ -300,40 +478,61 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final medicationService = Provider.of<MedicationService>(context);
-    final medications = medicationService.medications;
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mi Agenda'),
-        centerTitle: true,
+        title: const Text('MedTrack'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const HistoryScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () async {
+              final result = await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (ctx) => const AddMedicationScreen(),
+                ),
+              );
+              if (result == true) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Medicamento creado correctamente'),
+                      backgroundColor: Colors.teal,
+                    ),
+                  );
+                  _loadData();
+                }
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.exit_to_app),
             onPressed: () {
               Provider.of<AuthService>(context, listen: false).logout();
+              Navigator.of(context).pushReplacementNamed('/login');
             },
           ),
         ],
       ),
-      body: Column(
-        children: [
-          _buildDateHeader(),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _buildMedicationList(medications),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await Navigator.of(context).pushNamed(AddMedicationScreen.routeName);
-          if (mounted) _loadData();
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Agregar'),
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _buildDateHeader(),
+                Expanded(
+                  child: Consumer<MedicationService>(
+                    builder: (ctx, medService, child) =>
+                        _buildScheduleList(medService.medications),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }

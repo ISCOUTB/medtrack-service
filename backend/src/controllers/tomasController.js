@@ -106,7 +106,7 @@ export const getTomasByUsuario = async (req, res) => {
 
     try {
         let query = `
-            SELECT t.* 
+            SELECT t.*, m.nombre as medicamento_nombre, m.dosis as medicamento_dosis
             FROM toma t
             INNER JOIN medicamento m ON t.medicamento_id = m.id
             WHERE m.usuario_id = $1
