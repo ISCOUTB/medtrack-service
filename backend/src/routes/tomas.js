@@ -4,7 +4,8 @@ import {
     createToma,
     updateToma,
     deleteToma,
-    getTomaHistorial
+    getTomaHistorial,
+    registrarToma
 } from '../controllers/tomasController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -16,6 +17,30 @@ const router = express.Router();
  *   name: Tomas
  *   description: Endpoints para gestionar tomas de medicamentos
  */
+
+/**
+ * @swagger
+ * /tomas/registrar:
+ *   post:
+ *     summary: Registrar una toma realizada
+ *     tags: [Tomas]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               medicamento_id:
+ *                 type: integer
+ *               fecha_hora:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       201:
+ *         description: Toma registrada exitosamente
+ */
+router.post('/registrar', authenticateToken, registrarToma);
 
 /**
  * @swagger

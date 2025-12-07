@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/medication_service.dart';
+import '../services/notification_service.dart';
 
 class AddMedicationScreen extends StatefulWidget {
   static const routeName = '/add-medication';
@@ -16,12 +17,30 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   final _dosisController = TextEditingController();
   final _frecuenciaController = TextEditingController();
   final _notasController = TextEditingController();
+  TimeOfDay? _selectedTime;
   bool _isLoading = false;
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null && picked != _selectedTime) {
+      setState(() {
+        _selectedTime = picked;
+      });
+    }
+  }
 
   Future<void> _submit() async {
     if (_nombreController.text.isEmpty ||
         _dosisController.text.isEmpty ||
         _frecuenciaController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor completa todos los campos obligatorios.'),
+        ),
+      );
       return;
     }
 
@@ -29,8 +48,11 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       _isLoading = true;
     });
 
-    final success = await Provider.of<MedicationService>(context, listen: false)
-        .addMedication(
+    final newMedication =
+        await Provider.of<MedicationService>(
+          context,
+          listen: false,
+        ).addMedication(
           _nombreController.text,
           _dosisController.text,
           _frecuenciaController.text,
@@ -41,7 +63,30 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       _isLoading = false;
     });
 
-    if (success) {
+    if (newMedication != null) {
+      if (_selectedTime != null) {
+        final now = DateTime.now();
+        var scheduledDate = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          _selectedTime!.hour,
+          _selectedTime!.minute,
+        );
+
+        if (scheduledDate.isBefore(now)) {
+          scheduledDate = scheduledDate.add(const Duration(days: 1));
+        }
+
+        await NotificationService().scheduleNotification(
+          id: newMedication.id,
+          title: 'Hora de tu medicamento',
+          body:
+              'Es hora de tomar ${newMedication.nombre} (${newMedication.dosis})',
+          scheduledTime: scheduledDate,
+        );
+      }
+
       if (!mounted) return;
       Navigator.of(context).pop();
     } else {
@@ -97,13 +142,29 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Frecuencia (ej. 8 horas)',
                         prefixIcon: Icon(Icons.access_time),
+                        hintText: 'Describe la frecuencia',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      title: Text(
+                        _selectedTime == null
+                            ? 'Seleccionar hora de recordatorio'
+                            : 'Hora: ${_selectedTime!.format(context)}',
+                      ),
+                      leading: const Icon(Icons.alarm),
+                      onTap: () => _selectTime(context),
+                      tileColor: Colors.grey[100],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide.none,
                       ),
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: _notasController,
                       decoration: const InputDecoration(
-                        labelText: 'Notas (Opcional)',
+                        labelText: 'Notas (opcional)',
                         prefixIcon: Icon(Icons.note),
                       ),
                       maxLines: 3,
@@ -113,14 +174,19 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            if (_isLoading)
-              const Center(child: CircularProgressIndicator())
-            else
-              ElevatedButton.icon(
-                onPressed: _submit,
-                icon: const Icon(Icons.add),
-                label: const Text('Agregar Medicamento'),
-              ),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _submit,
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('Guardar Medicamento'),
+            ),
           ],
         ),
       ),

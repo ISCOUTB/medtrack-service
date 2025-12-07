@@ -58,9 +58,9 @@ Ver Diagrama de Contexto en la sección 3.
 ```mermaid
 graph TD
     User((Usuario))
-    MobileApp[App Móvil (Flutter)]
-    APIServer[API Backend (Node.js/Express)]
-    Database[(Base de Datos PostgreSQL)]
+    MobileApp[App Móvil - Flutter]
+    APIServer[API Backend - Node.js/Express]
+    Database[(Base de Datos - PostgreSQL)]
 
     User -->|Usa| MobileApp
     MobileApp -->|HTTPS / JSON| APIServer
