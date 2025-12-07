@@ -38,14 +38,18 @@ MedTrack se sitúa como un asistente personal de salud.
 **Diagrama de Contexto (C4 Nivel 1):**
 
 ```mermaid
-graph TD
-    User((Usuario Paciente))
-    System[Sistema MedTrack]
-    EmailSys[Sistema de Correo (Futuro)]
-    
-    User -->|Registra tomas, Gestiona medicamentos| System
+flowchart TB
+    User("👤 Usuario Paciente")
+    System("📱 Sistema MedTrack")
+    EmailSys("📧 Sistema de Correo (Futuro)")
+
+    User -->|Usa la App para registrar y consultar| System
     System -->|Envía notificaciones push locales| User
     System -.->|Envía correos de recuperación| EmailSys
+    
+    style User fill:#08427b,stroke:#052e56,color:#fff
+    style System fill:#1168bd,stroke:#0b4884,color:#fff
+    style EmailSys fill:#999999,stroke:#666666,color:#fff,stroke-dasharray: 5 5
 ```
 
 ### 3.2. Contexto Técnico
@@ -69,20 +73,27 @@ La arquitectura sigue el patrón **Cliente-Servidor** con una separación clara 
 ### 5.1. Nivel 2: Contenedores
 
 ```mermaid
-graph TD
-    subgraph Cliente
-        App[App Móvil (Flutter)]
-        LocalDB[(SharedPreferences / Local Storage)]
+flowchart TB
+    subgraph Client [📱 Cliente Móvil]
+        direction TB
+        App("Flutter App")
+        LocalDB[("💾 SharedPreferences")]
     end
 
-    subgraph Servidor
-        API[API REST (Node.js/Express)]
-        DB[(PostgreSQL)]
+    subgraph Backend [☁️ Servidor Backend]
+        direction TB
+        API("⚙️ API REST (Node.js)")
+        DB[("🗄️ PostgreSQL")]
     end
 
-    App -->|HTTPS / JSON| API
-    App -->|Lee/Escribe| LocalDB
-    API -->|SQL / TCP| DB
+    App <-->|HTTPS/JSON| API
+    App <-->|Lee/Escribe| LocalDB
+    API <-->|SQL/TCP| DB
+
+    style App fill:#1168bd,stroke:#0b4884,color:#fff
+    style API fill:#1168bd,stroke:#0b4884,color:#fff
+    style LocalDB fill:#2f95d7,stroke:#206897,color:#fff
+    style DB fill:#2f95d7,stroke:#206897,color:#fff
 ```
 
 ### 5.2. Nivel 3: Componentes - App Móvil
