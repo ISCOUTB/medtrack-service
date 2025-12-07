@@ -98,48 +98,90 @@ class _HomeScreenState extends State<HomeScreen> {
               itemCount: medications.length,
               itemBuilder: (ctx, i) => Card(
                 margin: const EdgeInsets.only(bottom: 16),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.teal.shade50,
-                    child: const Icon(Icons.medication, color: Colors.teal),
-                  ),
-                  title: Text(
-                    medications[i].nombre,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      Row(
+                child: Column(
+                  children: [
+                    ListTile(
+                      contentPadding: const EdgeInsets.all(16),
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.teal.shade50,
+                        child: const Icon(Icons.medication, color: Colors.teal),
+                      ),
+                      title: Text(
+                        medications[i].nombre,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.scale, size: 16, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          Text(medications[i].dosis),
-                          const SizedBox(width: 16),
-                          const Icon(
-                            Icons.access_time,
-                            size: 16,
-                            color: Colors.grey,
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.scale,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(medications[i].dosis),
+                              const SizedBox(width: 16),
+                              const Icon(
+                                Icons.access_time,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(medications[i].frecuencia),
+                            ],
                           ),
-                          const SizedBox(width: 4),
-                          Text(medications[i].frecuencia),
+                          if (medications[i].notas != null &&
+                              medications[i].notas!.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              medications[i].notas!,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
-                      if (medications[i].notas != null &&
-                          medications[i].notas!.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          medications[i].notas!,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontStyle: FontStyle.italic,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          FilledButton.tonalIcon(
+                            icon: const Icon(Icons.check),
+                            label: const Text('Registrar Toma'),
+                            onPressed: () async {
+                              final success =
+                                  await Provider.of<MedicationService>(
+                                    context,
+                                    listen: false,
+                                  ).recordIntake(medications[i].id);
+
+                              if (!context.mounted) return;
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    success
+                                        ? 'Toma registrada correctamente'
+                                        : 'Error al registrar la toma',
+                                  ),
+                                  backgroundColor: success
+                                      ? Colors.green
+                                      : Colors.red,
+                                ),
+                              );
+                            },
                           ),
-                        ),
-                      ],
-                    ],
-                  ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

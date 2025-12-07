@@ -50,6 +50,34 @@ export const deleteToma = async (req, res) => {
     }
 };
 
+export const registrarToma = async (req, res) => {
+    const { medicamento_id, fecha_hora } = req.body;
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        
+        const tomaRes = await client.query(
+            'INSERT INTO toma (medicamento_id, fecha_programada, tomada) VALUES ($1, $2, $3) RETURNING id;',
+            [medicamento_id, fecha_hora, true]
+        );
+        const tomaId = tomaRes.rows[0].id;
+
+        await client.query(
+            'INSERT INTO historial (toma_id, fecha_real, cumplimiento) VALUES ($1, $2, $3);',
+            [tomaId, fecha_hora, true]
+        );
+
+        await client.query('COMMIT');
+        res.status(201).json({ message: 'Toma registrada exitosamente', tomaId });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Error al registrar toma:', err);
+        res.status(500).json({ error: 'Error al registrar toma' });
+    } finally {
+        client.release();
+    }
+};
+
 export const getTomaHistorial = async (req, res) => {
     const { id } = req.params;
     try {
