@@ -5,7 +5,9 @@ Aplicación móvil desarrollada en Flutter para el servicio MedTrack.
 ## 📱 Características
 - **Inicio de Sesión y Registro:** Gestión de usuarios segura.
 - **Mis Medicamentos:** Lista visual de medicamentos con dosis y frecuencia.
-- **Agregar Medicamento:** Formulario sencillo para registrar nuevos tratamientos.
+- **Agregar Medicamento:** Formulario sencillo para registrar nuevos tratamientos y configurar recordatorios.
+- **Seguimiento de Tomas:** Registra cuándo tomas tus medicamentos con un solo toque.
+- **Notificaciones:** Recibe recordatorios locales para no olvidar tus dosis.
 - **Material Design 3:** Interfaz moderna y adaptable.
 
 ## 🛠️ Requisitos

@@ -38,13 +38,13 @@ class MedicationService with ChangeNotifier {
     }
   }
 
-  Future<bool> addMedication(
+  Future<Medication?> addMedication(
     String nombre,
     String dosis,
     String frecuencia,
     String notas,
   ) async {
-    if (token == null || userId == null) return false;
+    if (token == null || userId == null) return null;
 
     try {
       final response = await http.post(
@@ -66,13 +66,41 @@ class MedicationService with ChangeNotifier {
         final newMedication = Medication.fromJson(jsonDecode(response.body));
         _medications.add(newMedication);
         notifyListeners();
-        return true;
+        return newMedication;
       } else {
         debugPrint('Failed to add medication: ${response.body}');
-        return false;
+        return null;
       }
     } catch (e) {
       debugPrint('Error adding medication: $e');
+      return null;
+    }
+  }
+
+  Future<bool> recordIntake(int medicationId) async {
+    if (token == null) return false;
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:3000/tomas/registrar'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'medicamento_id': medicationId,
+          'fecha_hora': DateTime.now().toIso8601String(),
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        return true;
+      } else {
+        debugPrint('Failed to record intake: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('Error recording intake: $e');
       return false;
     }
   }
