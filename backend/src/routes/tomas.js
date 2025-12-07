@@ -5,7 +5,8 @@ import {
     updateToma,
     deleteToma,
     getTomaHistorial,
-    registrarToma
+    registrarToma,
+    getTomasByUsuario
 } from '../controllers/tomasController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -17,6 +18,30 @@ const router = express.Router();
  *   name: Tomas
  *   description: Endpoints para gestionar tomas de medicamentos
  */
+
+/**
+ * @swagger
+ * /tomas/usuario/{usuario_id}:
+ *   get:
+ *     summary: Obtener todas las tomas de un usuario
+ *     tags: [Tomas]
+ *     parameters:
+ *       - in: path
+ *         name: usuario_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: fecha
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrar por fecha (YYYY-MM-DD)
+ *     responses:
+ *       200:
+ *         description: Lista de tomas del usuario
+ */
+router.get('/usuario/:usuario_id', authenticateToken, getTomasByUsuario);
 
 /**
  * @swagger

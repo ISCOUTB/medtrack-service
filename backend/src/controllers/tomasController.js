@@ -51,20 +51,25 @@ export const deleteToma = async (req, res) => {
 };
 
 export const registrarToma = async (req, res) => {
-    const { medicamento_id, fecha_hora } = req.body;
+    const { medicamento_id, fecha_hora, estado, fecha_programada } = req.body;
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
         
+        // Use provided fecha_programada or default to fecha_hora (immediate take)
+        const scheduledTime = fecha_programada || fecha_hora;
+        const status = estado || 'TOMADO';
+
         const tomaRes = await client.query(
-            'INSERT INTO toma (medicamento_id, fecha_programada, tomada) VALUES ($1, $2, $3) RETURNING id;',
-            [medicamento_id, fecha_hora, true]
+            'INSERT INTO toma (medicamento_id, fecha_programada, tomada, estado, fecha_real) VALUES ($1, $2, $3, $4, $5) RETURNING id;',
+            [medicamento_id, scheduledTime, status === 'TOMADO', status, fecha_hora]
         );
         const tomaId = tomaRes.rows[0].id;
 
+        // Keep filling historial for backward compatibility if needed, but toma table now has the data
         await client.query(
             'INSERT INTO historial (toma_id, fecha_real, cumplimiento) VALUES ($1, $2, $3);',
-            [tomaId, fecha_hora, true]
+            [tomaId, fecha_hora, status === 'TOMADO']
         );
 
         await client.query('COMMIT');
@@ -92,5 +97,33 @@ export const getTomaHistorial = async (req, res) => {
     } catch (err) {
         console.error('Error al obtener historial de la toma:', err);
         res.status(500).json({ error: 'Error al obtener historial de la toma' });
+    }
+};
+
+export const getTomasByUsuario = async (req, res) => {
+    const { usuario_id } = req.params;
+    const { fecha } = req.query; // Optional date filter YYYY-MM-DD
+
+    try {
+        let query = `
+            SELECT t.* 
+            FROM toma t
+            INNER JOIN medicamento m ON t.medicamento_id = m.id
+            WHERE m.usuario_id = $1
+        `;
+        const params = [usuario_id];
+
+        if (fecha) {
+            query += ` AND DATE(t.fecha_programada) = $2`;
+            params.push(fecha);
+        }
+        
+        query += ` ORDER BY t.fecha_programada DESC`;
+
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error al obtener tomas del usuario:', err);
+        res.status(500).json({ error: 'Error al obtener tomas del usuario' });
     }
 };

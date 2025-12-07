@@ -5,6 +5,7 @@ class Medication {
   final String dosis;
   final String frecuencia;
   final String? notas;
+  final Map<String, dynamic>? detallesFrecuencia;
 
   Medication({
     required this.id,
@@ -13,6 +14,7 @@ class Medication {
     required this.dosis,
     required this.frecuencia,
     this.notas,
+    this.detallesFrecuencia,
   });
 
   factory Medication.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class Medication {
       dosis: json['dosis'],
       frecuencia: json['frecuencia'],
       notas: json['notas'],
+      detallesFrecuencia: json['detalles_frecuencia'],
     );
   }
 }
