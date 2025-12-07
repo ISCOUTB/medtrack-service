@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
+import 'home_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -33,7 +34,10 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (success) {
-      // Navigation is handled in main.dart or we can push replacement here
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
     } else {
       if (!mounted) return;
       showDialog(

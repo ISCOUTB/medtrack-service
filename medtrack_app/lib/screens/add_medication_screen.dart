@@ -20,7 +20,6 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   final _dosisController = TextEditingController();
   final _notasController = TextEditingController();
 
-  // Frequency State
   String _frequencyType = 'Diariamente';
   final List<String> _daysOfWeek = [
     'Lun',
@@ -121,7 +120,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     Map<String, dynamic> detallesFrecuencia = {
       'type': _frequencyType == 'Diariamente' ? 'daily' : 'specific_days',
       'times': _selectedTimes
-          .map((t) => '${t.hour}:${t.minute.toString().padLeft(2, '0')}')
+          .map(
+            (t) =>
+                '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}',
+          )
           .toList(),
     };
 
@@ -129,13 +131,12 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       List<int> days = [];
       for (int i = 0; i < 7; i++) {
         if (_selectedDays[i]) {
-          days.add(i + 1); // 1 = Monday
+          days.add(i + 1);
         }
       }
       detallesFrecuencia['days'] = days;
     }
 
-    // Generate summary string
     String frecuenciaStr = _frequencyType;
     if (_frequencyType == 'Diariamente') {
       frecuenciaStr = 'Diariamente ${_selectedTimes.length} veces';
@@ -148,7 +149,6 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     final medService = Provider.of<MedicationService>(context, listen: false);
 
     if (widget.medication != null) {
-      // Update
       success = await medService.updateMedication(
         widget.medication!.id,
         _nombreController.text,
@@ -158,7 +158,6 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         detallesFrecuencia: detallesFrecuencia,
       );
     } else {
-      // Create
       final newMed = await medService.addMedication(
         _nombreController.text,
         _dosisController.text,
@@ -174,23 +173,73 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     });
 
     if (success) {
-      // Update Notifications (simplified: cancel old ones and schedule new ones if needed)
-      // For now just schedule new ones as before.
-      // In a real app, we should cancel previous notifications for this med ID.
-      // NotificationService().cancelNotifications(medId);
+      if (!mounted) return;
 
-      // Re-schedule logic (same as before)
-      final medId = widget.medication?.id ?? 0; // If new, we might need ID.
-      // Wait, addMedication returns the object with ID. updateMedication returns bool.
-      // For updates, we have ID. For creates, we have object.
+      final medId = widget.medication?.id ?? 0;
+      final medName = _nombreController.text;
 
-      // To keep it simple and safe:
-      // We won't implement complex notification rescheduling here in this turn to avoid breaking things,
-      // as the user didn't explicitly ask for notification fixes, just editing.
-      // But we should at least try to schedule if it's new.
+      if (widget.medication != null) {
+        await NotificationService().cancelNotification(widget.medication!.id);
+      }
+
+      final now = DateTime.now();
+      for (var time in _selectedTimes) {
+        var scheduledDate = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          time.hour,
+          time.minute,
+        );
+
+        if (scheduledDate.isBefore(now)) {
+          scheduledDate = scheduledDate.add(const Duration(days: 1));
+        }
+
+        if (_frequencyType == 'Diariamente') {
+          await NotificationService().scheduleNotification(
+            id: medId * 100 + time.hour * 60 + time.minute,
+            title: 'Hora de tomar tu medicamento',
+            body: 'Es hora de tomar $medName',
+            scheduledTime: scheduledDate,
+          );
+        } else {
+          for (int i = 0; i < 7; i++) {
+            if (_selectedDays[i]) {
+              final targetWeekday = i + 1;
+              var nextDate = DateTime(
+                now.year,
+                now.month,
+                now.day,
+                time.hour,
+                time.minute,
+              );
+
+              while (nextDate.weekday != targetWeekday) {
+                nextDate = nextDate.add(const Duration(days: 1));
+              }
+
+              if (nextDate.isBefore(now)) {
+                nextDate = nextDate.add(const Duration(days: 7));
+              }
+
+              await NotificationService().scheduleNotification(
+                id:
+                    medId * 1000 +
+                    targetWeekday * 100 +
+                    time.hour * 60 +
+                    time.minute,
+                title: 'Hora de tomar tu medicamento',
+                body: 'Es hora de tomar $medName',
+                scheduledTime: nextDate,
+              );
+            }
+          }
+        }
+      }
 
       if (!mounted) return;
-      Navigator.of(context).pop(true); // Return true to indicate success
+      Navigator.of(context).pop(true);
     } else {
       if (!mounted) return;
       showDialog(
@@ -247,7 +296,6 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Frequency Selector
                     DropdownButtonFormField<String>(
                       value: _frequencyType,
                       decoration: const InputDecoration(

@@ -10,7 +10,7 @@ import 'history_screen.dart';
 class ScheduleItem {
   final Medication medication;
   final DateTime scheduledTime;
-  final String status; // 'PENDIENTE', 'TOMADO', 'OMITIDO'
+  final String status;
   final dynamic recordedIntake;
 
   ScheduleItem({
@@ -51,10 +51,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final medService = Provider.of<MedicationService>(context, listen: false);
     await medService.fetchMedications();
 
-    // Fetch intakes for the selected date
     final intakes = await medService.fetchIntakesForDate(_selectedDate);
 
-    // Organize intakes by medication ID for easier lookup
     Map<int, List<dynamic>> intakesMap = {};
     for (var intake in intakes) {
       final medId = intake['medicamento_id'];
@@ -112,7 +110,8 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: status == 'TOMADO' ? Colors.green : Colors.orange,
         ),
       );
-      _loadData(); // Reload to update UI
+
+      await _loadData();
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -145,7 +144,6 @@ class _HomeScreenState extends State<HomeScreen> {
     List<ScheduleItem> schedule = [];
 
     for (var med in meds) {
-      // Parse frequency details
       List<TimeOfDay> times = [];
       bool shouldInclude = false;
 
@@ -155,7 +153,6 @@ class _HomeScreenState extends State<HomeScreen> {
           shouldInclude = true;
         } else if (type == 'specific_days') {
           final days = List<int>.from(med.detallesFrecuencia!['days'] ?? []);
-          // weekday: 1=Mon, 7=Sun
           if (days.contains(_selectedDate.weekday)) {
             shouldInclude = true;
           }
@@ -177,15 +174,8 @@ class _HomeScreenState extends State<HomeScreen> {
             }
           }
         }
-      } else {
-        // Legacy fallback or default
-        if (med.frecuencia.contains('Diariamente')) {
-          // If no details but text says daily, assume 8am?
-          // Better to not assume to avoid confusion.
-        }
       }
 
-      // Generate items for each time
       for (var time in times) {
         final scheduledDateTime = DateTime(
           _selectedDate.year,
@@ -195,7 +185,6 @@ class _HomeScreenState extends State<HomeScreen> {
           time.minute,
         );
 
-        // Find if there's a recorded intake for this time
         dynamic matchingIntake;
         final intakes = _recordedIntakes[med.id] ?? [];
 
@@ -204,12 +193,12 @@ class _HomeScreenState extends State<HomeScreen> {
             final intakeTime = DateTime.parse(
               intake['fecha_programada'],
             ).toLocal();
-            // Compare with minute precision
-            if (intakeTime.year == scheduledDateTime.year &&
-                intakeTime.month == scheduledDateTime.month &&
-                intakeTime.day == scheduledDateTime.day &&
-                intakeTime.hour == scheduledDateTime.hour &&
-                intakeTime.minute == scheduledDateTime.minute) {
+
+            final diff = intakeTime
+                .difference(scheduledDateTime)
+                .inMinutes
+                .abs();
+            if (diff <= 2) {
               matchingIntake = intake;
               break;
             }
@@ -219,6 +208,11 @@ class _HomeScreenState extends State<HomeScreen> {
         String status = 'PENDIENTE';
         if (matchingIntake != null) {
           status = matchingIntake['estado'] ?? 'PENDIENTE';
+        } else if (scheduledDateTime.isBefore(DateTime.now()) &&
+            scheduledDateTime.day == DateTime.now().day &&
+            scheduledDateTime.month == DateTime.now().month &&
+            scheduledDateTime.year == DateTime.now().year) {
+          status = 'ATRASADO';
         }
 
         schedule.add(
@@ -232,7 +226,6 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    // Sort by time
     schedule.sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
     return schedule;
   }
@@ -300,6 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final med = item.medication;
         final isTaken = item.status == 'TOMADO';
         final isSkipped = item.status == 'OMITIDO';
+        final isOverdue = item.status == 'ATRASADO';
 
         Color statusColor = Colors.grey;
         IconData statusIcon = Icons.circle_outlined;
@@ -313,6 +307,10 @@ class _HomeScreenState extends State<HomeScreen> {
           statusColor = Colors.orange;
           statusIcon = Icons.remove_circle;
           statusText = 'Omitido';
+        } else if (isOverdue) {
+          statusColor = Colors.red;
+          statusIcon = Icons.warning;
+          statusText = 'Atrasado';
         }
 
         return Card(
@@ -430,7 +428,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: TextStyle(
                           color: statusColor,
                           fontWeight: FontWeight.bold,
-                          fontSize: 10,
+                          fontSize: 12,
                         ),
                       ),
                     ],
