@@ -190,15 +190,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
         for (var intake in intakes) {
           if (intake['fecha_programada'] != null) {
-            final intakeTime = DateTime.parse(
-              intake['fecha_programada'],
-            ).toLocal();
+            final intakeTime = DateTime.parse(intake['fecha_programada']);
 
-            final diff = intakeTime
-                .difference(scheduledDateTime)
-                .inMinutes
-                .abs();
-            if (diff <= 2) {
+            if (intakeTime.year == scheduledDateTime.year &&
+                intakeTime.month == scheduledDateTime.month &&
+                intakeTime.day == scheduledDateTime.day &&
+                intakeTime.hour == scheduledDateTime.hour &&
+                intakeTime.minute == scheduledDateTime.minute) {
               matchingIntake = intake;
               break;
             }
@@ -315,158 +313,195 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return Card(
           margin: const EdgeInsets.only(bottom: 16),
-          elevation: 2,
+          elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: Colors.grey.shade200),
           ),
           child: Column(
             children: [
-              ListTile(
-                contentPadding: const EdgeInsets.all(16),
-                leading: CircleAvatar(
-                  backgroundColor: statusColor.withOpacity(0.1),
-                  child: Icon(Icons.medication, color: statusColor),
-                ),
-                title: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        med.nombre,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    PopupMenuButton<String>(
-                      onSelected: (value) {
-                        if (value == 'edit') {
-                          _editMedication(med);
-                        }
-                      },
-                      itemBuilder: (BuildContext context) =>
-                          <PopupMenuEntry<String>>[
-                            const PopupMenuItem<String>(
-                              value: 'edit',
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.edit,
-                                    size: 20,
-                                    color: Colors.teal,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text('Editar'),
-                                ],
-                              ),
-                            ),
-                          ],
-                      child: const Icon(Icons.more_vert, color: Colors.grey),
-                    ),
-                  ],
-                ),
-                subtitle: Column(
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.access_time,
-                          size: 16,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          DateFormat('HH:mm').format(item.scheduledTime),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(width: 16),
-                        const Icon(Icons.scale, size: 16, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            med.dosis,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (med.notas != null && med.notas!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        med.notas!,
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontStyle: FontStyle.italic,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
                       ),
-                    ],
+                      child: Icon(Icons.medication_rounded, color: statusColor),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  med.nombre,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              PopupMenuButton<String>(
+                                onSelected: (value) {
+                                  if (value == 'edit') {
+                                    _editMedication(med);
+                                  }
+                                },
+                                itemBuilder: (BuildContext context) =>
+                                    <PopupMenuEntry<String>>[
+                                      const PopupMenuItem<String>(
+                                        value: 'edit',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.edit_rounded,
+                                              size: 20,
+                                              color: Colors.teal,
+                                            ),
+                                            SizedBox(width: 8),
+                                            Text('Editar'),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                child: const Icon(
+                                  Icons.more_vert_rounded,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.access_time_rounded,
+                                      size: 14,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      DateFormat(
+                                        'HH:mm',
+                                      ).format(item.scheduledTime),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.scale_rounded,
+                                      size: 14,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      med.dosis,
+                                      style: const TextStyle(fontSize: 14),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (med.notas != null && med.notas!.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              med.notas!,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontStyle: FontStyle.italic,
+                                fontSize: 13,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: statusColor.withOpacity(0.5)),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(statusIcon, size: 16, color: statusColor),
-                      const SizedBox(height: 2),
-                      Text(
-                        statusText,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
-              if (!isTaken && !isSkipped)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  child: Row(
-                    children: [
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    if (!isSkipped)
                       Expanded(
                         child: OutlinedButton.icon(
-                          icon: const Icon(Icons.block, size: 18),
-                          label: const Text('Omitir'),
+                          icon: const Icon(Icons.block_rounded, size: 18),
+                          label: Text(isTaken ? 'Cambiar a Omitido' : 'Omitir'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.orange,
                             side: const BorderSide(color: Colors.orange),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           onPressed: () =>
                               _recordIntake(med, item.scheduledTime, 'OMITIDO'),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                    if (!isSkipped && !isTaken) const SizedBox(width: 16),
+                    if (!isTaken)
                       Expanded(
                         child: FilledButton.icon(
-                          icon: const Icon(Icons.check, size: 18),
-                          label: const Text('Tomar'),
+                          icon: const Icon(Icons.check_rounded, size: 18),
+                          label: Text(isSkipped ? 'Cambiar a Tomado' : 'Tomar'),
                           style: FilledButton.styleFrom(
                             backgroundColor: Colors.green,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           onPressed: () =>
                               _recordIntake(med, item.scheduledTime, 'TOMADO'),
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
+              ),
             ],
           ),
         );

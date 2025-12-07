@@ -42,64 +42,94 @@ class MyApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          supportedLocales: const [
-            Locale('es', ''), // Spanish
-            Locale('en', ''), // English
-          ],
+          supportedLocales: const [Locale('es', ''), Locale('en', '')],
           theme: ThemeData(
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.teal,
-              primary: Colors.teal,
-              secondary: Colors.tealAccent,
+              seedColor: const Color(0xFF00796B),
+              primary: const Color(0xFF00796B),
+              secondary: const Color(0xFF009688),
+              surface: const Color(0xFFF5F7FA),
+              error: const Color(0xFFD32F2F),
             ),
+            scaffoldBackgroundColor: const Color(0xFFF5F7FA),
             inputDecorationTheme: InputDecorationTheme(
               filled: true,
-              fillColor: Colors.grey[100],
+              fillColor: Colors.white,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: Colors.grey.shade200),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Colors.teal, width: 2),
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(
+                  color: Color(0xFF00796B),
+                  width: 2,
+                ),
               ),
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
+                horizontal: 20,
+                vertical: 18,
               ),
+              labelStyle: TextStyle(color: Colors.grey.shade600),
+              floatingLabelStyle: const TextStyle(color: Color(0xFF00796B)),
             ),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
+                backgroundColor: const Color(0xFF00796B),
                 foregroundColor: Colors.white,
+                elevation: 2,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 textStyle: const TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
-            cardTheme: const CardThemeData(
-              elevation: 2,
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF00796B),
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            cardTheme: CardThemeData(
+              elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(16)),
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: Colors.grey.shade200),
               ),
               color: Colors.white,
-              surfaceTintColor: Colors.white,
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
             ),
             appBarTheme: const AppBarTheme(
-              backgroundColor: Colors.teal,
+              backgroundColor: Color(0xFF00796B),
               foregroundColor: Colors.white,
               centerTitle: true,
               elevation: 0,
+              titleTextStyle: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            floatingActionButtonTheme: const FloatingActionButtonThemeData(
+              backgroundColor: Color(0xFF00796B),
+              foregroundColor: Colors.white,
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(16)),
+              ),
             ),
           ),
           home: auth.isAuthenticated

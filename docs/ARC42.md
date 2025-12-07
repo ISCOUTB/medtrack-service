@@ -8,10 +8,10 @@ MedTrack es una solución integral para la gestión y seguimiento de tratamiento
 ### 1.2. Objetivos de Calidad
 Los principales objetivos de calidad para la arquitectura son:
 
-1.  **Usabilidad:** La interfaz de usuario debe ser intuitiva, minimizando el número de pasos para registrar una toma.
-2.  **Fiabilidad:** El sistema debe garantizar la persistencia de los datos de salud y la correcta programación de notificaciones locales.
+1.  **Usabilidad:** La interfaz de usuario debe ser moderna (Material 3), intuitiva y minimizar el número de pasos para registrar una toma.
+2.  **Fiabilidad:** El sistema debe garantizar la persistencia de los datos de salud y la correcta programación de notificaciones locales exactas.
 3.  **Rendimiento:** Tiempos de respuesta de la API inferiores a 200ms y fluidez en la aplicación móvil (60fps).
-4.  **Mantenibilidad:** Código estructurado en capas claras (Frontend: Provider/Services, Backend: Controllers/Routes) para facilitar futuras extensiones.
+4.  **Mantenibilidad:** Código estructurado en capas claras (Frontend: Provider/Services, Backend: Controllers/Routes) y libre de comentarios redundantes.
 5.  **Seguridad:** Protección de datos de usuario mediante autenticación JWT y almacenamiento seguro de credenciales.
 
 ### 1.3. Stakeholders
@@ -23,12 +23,12 @@ Los principales objetivos de calidad para la arquitectura son:
 
 ## 2. Restricciones de Arquitectura
 
-*   **Frontend:** Framework Flutter (Dart) para soporte multiplataforma (Android/iOS).
+*   **Frontend:** Framework Flutter (Dart) con Material 3 Design.
 *   **Backend:** Node.js con Express.
 *   **Base de Datos:** PostgreSQL (Relacional).
 *   **Comunicación:** API REST sobre HTTP/HTTPS (JSON).
 *   **Autenticación:** JWT (JSON Web Tokens).
-*   **Infraestructura Local:** Docker para contenedorización de la base de datos durante el desarrollo.
+*   **Permisos Android:** Requiere `SCHEDULE_EXACT_ALARM` para notificaciones precisas.
 
 ## 3. Contexto y Alcance
 
@@ -91,6 +91,7 @@ graph TD
 classDiagram
     class UI_Layer {
         +LoginScreen
+        +RegisterScreen
         +HomeScreen
         +AddMedicationScreen
         +HistoryScreen
@@ -121,13 +122,13 @@ classDiagram
 *   **Controllers (`/controllers`):** Lógica de negocio y orquestación.
     *   `authController`: Login, Registro.
     *   `medicamentosController`: CRUD Medicamentos, manejo de frecuencias complejas.
-    *   `tomasController`: Registro de historial, consulta por fecha.
+    *   `tomasController`: Registro de historial con lógica UPSERT (Evita duplicados).
 *   **Database (`/config/db.js`):** Conexión y pool de conexiones a PostgreSQL.
 
 ## 6. Vista en Tiempo de Ejecución
 
-### 6.1. Escenario: Registro de Toma Diaria
-El usuario marca un medicamento como "Tomado" desde la pantalla principal.
+### 6.1. Escenario: Registro/Actualización de Toma
+El usuario marca un medicamento como "Tomado" o cambia su estado de "Omitido" a "Tomado".
 
 ```mermaid
 sequenceDiagram
@@ -137,14 +138,20 @@ sequenceDiagram
     participant API
     participant DB
 
-    User->>HomeScreen: Clic en "Tomar"
-    HomeScreen->>MedService: recordIntake(medId, 'TOMADO')
+    User->>HomeScreen: Clic en "Tomar" o "Cambiar Estado"
+    HomeScreen->>MedService: recordIntake(medId, status, time)
     MedService->>API: POST /tomas/registrar
-    API->>DB: INSERT INTO tomas (...)
+    API->>DB: SELECT id FROM toma WHERE med_id AND time
+    alt Existe Toma
+        API->>DB: UPDATE toma SET estado = status
+    else No Existe
+        API->>DB: INSERT INTO toma (...)
+    end
+    API->>DB: UPSERT historial
     DB-->>API: Confirmación (ID)
-    API-->>MedService: 201 Created
+    API-->>MedService: 201 Created / 200 OK
     MedService-->>HomeScreen: true
-    HomeScreen->>HomeScreen: Actualizar UI (Icono Verde)
+    HomeScreen->>HomeScreen: Actualizar UI (Icono/Botones)
     HomeScreen->>MedService: fetchIntakesForDate() (Refresco)
 ```
 
@@ -167,6 +174,8 @@ sequenceDiagram
     MedService-->>AddMedScreen: Medication Object
     AddMedScreen->>NotificationService: scheduleNotification(id, time...)
     NotificationService-->>AddMedScreen: OK
+    AddMedScreen->>AddMedScreen: Mostrar Diálogo Confirmación
+    User->>AddMedScreen: Clic "Aceptar"
     AddMedScreen-->>User: Navegar atrás (Pop)
 ```
 
@@ -185,15 +194,16 @@ El entorno actual es de desarrollo local, simulando un entorno de producción.
 
 ### 8.1. Modelo de Dominio y Persistencia
 *   **Medicamento:** Entidad central. Contiene campo JSONB `detalles_frecuencia` para flexibilidad (días específicos, múltiples horas).
-*   **Toma (Intake):** Registro inmutable de un evento. Relaciona Medicamento, Fecha Real, Fecha Programada y Estado (TOMADO/OMITIDO/PENDIENTE).
+*   **Toma (Intake):** Registro inmutable de un evento. Relaciona Medicamento, Fecha Real, Fecha Programada y Estado (TOMADO/OMITIDO/PENDIENTE/ATRASADO).
 
 ### 8.2. Internacionalización (i18n)
 *   Uso de `flutter_localizations` y `intl`.
 *   Configuración regional 'es' (Español) por defecto para formatos de fecha y hora.
 
 ### 8.3. Manejo de Errores
-*   **Backend:** Middleware de manejo de errores global (propuesto). Respuestas JSON consistentes `{ "error": "mensaje" }`.
+*   **Backend:** Middleware de manejo de errores global. Respuestas JSON consistentes `{ "error": "mensaje" }`.
 *   **Frontend:** `ScaffoldMessenger` para Feedback visual (Snackbars) ante fallos de red o validación.
+*   **Permisos:** Manejo de excepciones para `exact_alarms_not_permitted` en Android 12+.
 
 ## 9. Decisiones de Diseño
 
@@ -201,7 +211,7 @@ El entorno actual es de desarrollo local, simulando un entorno de producción.
 | :--- | :--- | :--- |
 | **JSONB en PostgreSQL** | Permite almacenar configuraciones de frecuencia complejas y variables sin complicar el esquema relacional con múltiples tablas de unión para horarios. | Tabla `horarios_medicamento` (mayor complejidad de joins). |
 | **Provider (Flutter)** | Solución estándar, ligera y suficiente para la complejidad actual de la app. | BLoC (demasiado boilerplate), Riverpod (curva de aprendizaje mayor). |
-| **Notificaciones Locales** | No se requiere servidor de push (Firebase) ya que la lógica de recordatorios es personal y reside en el dispositivo. | FCM (Firebase Cloud Messaging) - Innecesario coste/complejidad por ahora. |
+| **Notificaciones Locales Exactas** | Se requiere precisión en la hora de la toma médica. Se usan alarmas exactas de Android. | WorkManager (menos preciso), FCM (excesivo para local). |
 
 ## 10. Requerimientos de Calidad (Escenarios)
 
@@ -213,7 +223,7 @@ El entorno actual es de desarrollo local, simulando un entorno de producción.
 *   **Validación de Datos Backend:** La validación actual en el backend es básica. Se recomienda implementar una librería como `Joi` o `express-validator`.
 *   **Seguridad de Token:** El JWT se almacena en `SharedPreferences` sin encriptación adicional. En producción, usar `flutter_secure_storage`.
 *   **Testing:** Cobertura de pruebas unitarias y de integración es nula actualmente. Riesgo de regresión en refactorizaciones.
-*   **Sincronización:** Si el usuario usa múltiples dispositivos, las notificaciones locales no se sincronizan entre ellos.
+*   **Políticas de Google Play:** El uso del permiso `SCHEDULE_EXACT_ALARM` requiere justificación al publicar en la tienda.
 
 ## 12. Glosario
 
@@ -221,3 +231,6 @@ El entorno actual es de desarrollo local, simulando un entorno de producción.
 *   **Schedule (Agenda):** Lista ordenada de tomas programadas para un día.
 *   **JSONB:** Binary JSON, tipo de dato de PostgreSQL para documentos JSON indexables.
 *   **Widget:** Componente visual básico en Flutter.
+*   **Upsert:** Operación de base de datos que actualiza un registro si existe, o lo inserta si no.
+*   **Material 3:** Última versión del sistema de diseño de Google, enfocado en personalización y accesibilidad.
+*   **JWT:** JSON Web Token, estándar para compartir información de seguridad entre cliente y servidor.

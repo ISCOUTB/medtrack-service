@@ -239,6 +239,27 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       }
 
       if (!mounted) return;
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Éxito'),
+          content: Text(
+            widget.medication != null
+                ? 'Medicamento actualizado correctamente.'
+                : 'Medicamento agregado correctamente.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+              },
+              child: const Text('Aceptar'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
       Navigator.of(context).pop(true);
     } else {
       if (!mounted) return;
@@ -265,9 +286,13 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.medication != null;
+    final theme = Theme.of(context);
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(isEditing ? 'Editar Medicamento' : 'Agregar Medicamento'),
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -275,134 +300,244 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: Colors.grey.shade200),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(24.0),
                 child: Column(
                   children: [
                     TextField(
                       controller: _nombreController,
                       decoration: const InputDecoration(
                         labelText: 'Nombre del Medicamento',
-                        prefixIcon: Icon(Icons.medication),
+                        prefixIcon: Icon(Icons.medication_outlined),
+                        border: OutlineInputBorder(),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     TextField(
                       controller: _dosisController,
                       decoration: const InputDecoration(
-                        labelText: 'Dosis (ej. 500mg)',
-                        prefixIcon: Icon(Icons.scale),
+                        labelText: 'Dosis (ej. 500mg, 1 tableta)',
+                        prefixIcon: Icon(Icons.scale_outlined),
+                        border: OutlineInputBorder(),
                       ),
                     ),
-                    const SizedBox(height: 16),
-
-                    DropdownButtonFormField<String>(
-                      value: _frequencyType,
-                      decoration: const InputDecoration(
-                        labelText: 'Frecuencia',
-                        prefixIcon: Icon(Icons.calendar_today),
-                      ),
-                      items: ['Diariamente', 'Días específicos']
-                          .map(
-                            (type) => DropdownMenuItem(
-                              value: type,
-                              child: Text(type),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _frequencyType = value!;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    if (_frequencyType == 'Días específicos') ...[
-                      const Text(
-                        'Selecciona los días:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        children: List.generate(7, (index) {
-                          return FilterChip(
-                            label: Text(_daysOfWeek[index]),
-                            selected: _selectedDays[index],
-                            onSelected: (selected) {
-                              setState(() {
-                                _selectedDays[index] = selected;
-                              });
-                            },
-                          );
-                        }),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Horarios:',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.add_circle,
-                            color: Colors.teal,
-                          ),
-                          onPressed: () => _addTime(context),
-                        ),
-                      ],
-                    ),
-                    if (_selectedTimes.isEmpty)
-                      const Text(
-                        'No hay horarios agregados',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ..._selectedTimes.map(
-                      (time) => ListTile(
-                        title: Text(time.format(context)),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _removeTime(time),
-                        ),
-                        dense: true,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     TextField(
                       controller: _notasController,
                       decoration: const InputDecoration(
-                        labelText: 'Notas (opcional)',
-                        prefixIcon: Icon(Icons.note),
+                        labelText: 'Notas adicionales (opcional)',
+                        prefixIcon: Icon(Icons.note_alt_outlined),
+                        border: OutlineInputBorder(),
                       ),
-                      maxLines: 3,
+                      maxLines: 2,
                     ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _submit,
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
+            Text(
+              'Frecuencia',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onBackground,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: Colors.grey.shade200),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _frequencyType,
+                    isExpanded: true,
+                    icon: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: theme.colorScheme.primary,
+                    ),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    items: ['Diariamente', 'Días específicos'].map((
+                      String value,
+                    ) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Row(
+                          children: [
+                            Icon(
+                              value == 'Diariamente'
+                                  ? Icons.calendar_today
+                                  : Icons.calendar_month,
+                              size: 20,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(value),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      setState(() {
+                        _frequencyType = newValue!;
+                      });
+                    },
+                  ),
+                ),
+              ),
+            ),
+            if (_frequencyType == 'Días específicos') ...[
+              const SizedBox(height: 20),
+              Text(
+                'Selecciona los días',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: List.generate(7, (index) {
+                  final isSelected = _selectedDays[index];
+                  return FilterChip(
+                    label: Text(_daysOfWeek[index]),
+                    selected: isSelected,
+                    onSelected: (bool selected) {
+                      setState(() {
+                        _selectedDays[index] = selected;
+                      });
+                    },
+                    selectedColor: theme.colorScheme.primary.withOpacity(0.2),
+                    checkmarkColor: theme.colorScheme.primary,
+                    labelStyle: TextStyle(
+                      color: isSelected
+                          ? theme.colorScheme.primary
+                          : Colors.grey.shade700,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: isSelected
+                            ? theme.colorScheme.primary
+                            : Colors.grey.shade300,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Horarios de toma',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () => _addTime(context),
+                  icon: const Icon(Icons.add_alarm),
+                  label: const Text('Agregar Hora'),
+                ),
+              ],
+            ),
+            if (_selectedTimes.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(24),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.access_time_outlined,
+                      size: 48,
+                      color: Colors.grey.shade400,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No hay horarios configurados',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: _selectedTimes.map((time) {
+                  return Chip(
+                    label: Text(
+                      time.format(context),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
-                    )
-                  : Text(isEditing ? 'Actualizar' : 'Guardar Medicamento'),
-            ),
+                    ),
+                    backgroundColor: theme.colorScheme.secondary,
+                    deleteIcon: const Icon(
+                      Icons.close,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                    onDeleted: () => _removeTime(time),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide.none,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
+                  );
+                }).toList(),
+              ),
+            const SizedBox(height: 40),
+            if (_isLoading)
+              const Center(child: CircularProgressIndicator())
+            else
+              ElevatedButton(
+                onPressed: _submit,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  backgroundColor: theme.colorScheme.primary,
+                  elevation: 4,
+                  shadowColor: theme.colorScheme.primary.withOpacity(0.4),
+                ),
+                child: Text(
+                  isEditing ? 'Guardar Cambios' : 'Crear Medicamento',
+                  style: const TextStyle(fontSize: 18),
+                ),
+              ),
+            const SizedBox(height: 24),
           ],
         ),
       ),

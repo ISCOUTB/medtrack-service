@@ -35,7 +35,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (success) {
       if (!mounted) return;
-      Navigator.of(context).pop(); // Go back to login
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Registro exitoso. Por favor inicia sesión.'),
@@ -61,9 +61,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text('Registro')),
+      appBar: AppBar(
+        title: const Text('Registro'),
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -71,6 +76,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.person_add_rounded,
+                    size: 80,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 24),
                 const Text(
                   'Crear Cuenta',
                   textAlign: TextAlign.center,
@@ -80,31 +98,59 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     color: Colors.black87,
                   ),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  'Únete a MedTrack hoy',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                ),
                 const SizedBox(height: 32),
-                TextField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre Completo',
-                    prefixIcon: Icon(Icons.person_outline),
+                Card(
+                  elevation: 0,
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    side: BorderSide(color: Colors.grey.shade200),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Correo Electrónico',
-                    prefixIcon: Icon(Icons.email_outlined),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Nombre Completo',
+                            prefixIcon: Icon(Icons.person_outline),
+                            border: OutlineInputBorder(),
+                          ),
+                          textInputAction: TextInputAction.next,
+                        ),
+                        const SizedBox(height: 20),
+                        TextField(
+                          controller: _emailController,
+                          decoration: const InputDecoration(
+                            labelText: 'Correo Electrónico',
+                            prefixIcon: Icon(Icons.email_outlined),
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                        ),
+                        const SizedBox(height: 20),
+                        TextField(
+                          controller: _passwordController,
+                          decoration: const InputDecoration(
+                            labelText: 'Contraseña',
+                            prefixIcon: Icon(Icons.lock_outline),
+                            border: OutlineInputBorder(),
+                          ),
+                          obscureText: true,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _submit(),
+                        ),
+                      ],
+                    ),
                   ),
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Contraseña',
-                    prefixIcon: Icon(Icons.lock_outline),
-                  ),
-                  obscureText: true,
                 ),
                 const SizedBox(height: 24),
                 if (_isLoading)
@@ -114,6 +160,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onPressed: _submit,
                     child: const Text('Registrarse'),
                   ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '¿Ya tienes cuenta?',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Inicia Sesión'),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

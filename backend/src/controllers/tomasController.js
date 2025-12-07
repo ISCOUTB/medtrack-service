@@ -56,24 +56,37 @@ export const registrarToma = async (req, res) => {
     try {
         await client.query('BEGIN');
         
-        // Use provided fecha_programada or default to fecha_hora (immediate take)
         const scheduledTime = fecha_programada || fecha_hora;
         const status = estado || 'TOMADO';
 
-        const tomaRes = await client.query(
-            'INSERT INTO toma (medicamento_id, fecha_programada, tomada, estado, fecha_real) VALUES ($1, $2, $3, $4, $5) RETURNING id;',
-            [medicamento_id, scheduledTime, status === 'TOMADO', status, fecha_hora]
+        const existingToma = await client.query(
+            'SELECT id FROM toma WHERE medicamento_id = $1 AND fecha_programada = $2',
+            [medicamento_id, scheduledTime]
         );
-        const tomaId = tomaRes.rows[0].id;
 
-        // Keep filling historial for backward compatibility if needed, but toma table now has the data
+        let tomaId;
+
+        if (existingToma.rows.length > 0) {
+            tomaId = existingToma.rows[0].id;
+            await client.query(
+                'UPDATE toma SET tomada = $1, estado = $2, fecha_real = $3 WHERE id = $4',
+                [status === 'TOMADO', status, fecha_hora, tomaId]
+            );
+        } else {
+            const tomaRes = await client.query(
+                'INSERT INTO toma (medicamento_id, fecha_programada, tomada, estado, fecha_real) VALUES ($1, $2, $3, $4, $5) RETURNING id;',
+                [medicamento_id, scheduledTime, status === 'TOMADO', status, fecha_hora]
+            );
+            tomaId = tomaRes.rows[0].id;
+        }
+
         await client.query(
             'INSERT INTO historial (toma_id, fecha_real, cumplimiento) VALUES ($1, $2, $3);',
             [tomaId, fecha_hora, status === 'TOMADO']
         );
 
         await client.query('COMMIT');
-        res.status(201).json({ message: 'Toma registrada exitosamente', tomaId });
+        res.status(201).json({ message: 'Toma registrada/actualizada exitosamente', tomaId });
     } catch (err) {
         await client.query('ROLLBACK');
         console.error('Error al registrar toma:', err);
@@ -102,7 +115,7 @@ export const getTomaHistorial = async (req, res) => {
 
 export const getTomasByUsuario = async (req, res) => {
     const { usuario_id } = req.params;
-    const { fecha } = req.query; // Optional date filter YYYY-MM-DD
+    const { fecha } = req.query;
 
     try {
         let query = `
@@ -118,7 +131,7 @@ export const getTomasByUsuario = async (req, res) => {
             params.push(fecha);
         }
         
-        query += ` ORDER BY t.fecha_programada DESC`;
+        query += ` ORDER BY t.fecha_programada DESC, t.id DESC`;
 
         const result = await pool.query(query, params);
         res.json(result.rows);
