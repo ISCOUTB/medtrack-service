@@ -1,16 +1,30 @@
 ```mermaid
-C4Component
-title API REST - Componentes
+classDiagram
+    class UI_Layer {
+        +LoginScreen
+        +RegisterScreen
+        +HomeScreen
+        +AddMedicationScreen
+        +HistoryScreen
+    }
+    class State_Management {
+        +AuthProvider
+        +MedicationProvider
+    }
+    class Service_Layer {
+        +AuthService
+        +MedicationService
+        +NotificationService
+    }
+    class Backend_Layer {
+        +AuthRoutes
+        +MedicationRoutes
+        +IntakeRoutes
+        +Controllers
+        +DB_Pool
+    }
 
-Container(api, "API REST", "Node.js + Express")
-
-Component(controllerMed, "MedicamentosController", "Gestiona CRUD de medicamentos")
-Component(controllerTomas, "TomasController", "Gestiona programación y registro de tomas")
-Component(serviceNotif, "NotificationService", "Calcula próximas tomas y envía recordatorios")
-Component(repoMed, "MedicamentosRepository", "Acceso a datos de medicamentos")
-Component(repoTomas, "TomasRepository", "Acceso a datos de tomas")
-
-Rel(controllerMed, repoMed, "Usa")
-Rel(controllerTomas, repoTomas, "Usa")
-Rel(controllerTomas, serviceNotif, "Invoca")
+    UI_Layer --> State_Management
+    State_Management --> Service_Layer
+    Service_Layer --> Backend_Layer
 ```

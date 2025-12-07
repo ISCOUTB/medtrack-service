@@ -15,6 +15,7 @@ erDiagram
         varchar nombre
         varchar dosis
         varchar frecuencia
+        jsonb detalles_frecuencia
         varchar notas
     }
 
@@ -22,7 +23,8 @@ erDiagram
         int id PK
         int medicamento_id FK
         timestamp fecha_programada
-        boolean tomada
+        varchar estado "TOMADO | OMITIDO | PENDIENTE | ATRASADO"
+        timestamp fecha_real
     }
 
     HISTORIAL {

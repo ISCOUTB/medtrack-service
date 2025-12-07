@@ -127,16 +127,17 @@ class _HomeScreenState extends State<HomeScreen> {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(builder: (ctx) => AddMedicationScreen(medication: med)),
     );
+
+    if (!mounted) return;
+
     if (result == true) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Medicamento actualizado correctamente'),
-            backgroundColor: Colors.teal,
-          ),
-        );
-        _loadData();
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Medicamento actualizado correctamente'),
+          backgroundColor: Colors.teal,
+        ),
+      );
+      _loadData();
     }
   }
 
@@ -231,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildDateHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-      color: Theme.of(context).primaryColor.withOpacity(0.1),
+      color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -294,21 +295,13 @@ class _HomeScreenState extends State<HomeScreen> {
         final isOverdue = item.status == 'ATRASADO';
 
         Color statusColor = Colors.grey;
-        IconData statusIcon = Icons.circle_outlined;
-        String statusText = 'Pendiente';
 
         if (isTaken) {
           statusColor = Colors.green;
-          statusIcon = Icons.check_circle;
-          statusText = 'Tomado';
         } else if (isSkipped) {
           statusColor = Colors.orange;
-          statusIcon = Icons.remove_circle;
-          statusText = 'Omitido';
         } else if (isOverdue) {
           statusColor = Colors.red;
-          statusIcon = Icons.warning;
-          statusText = 'Atrasado';
         }
 
         return Card(
@@ -328,7 +321,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
+                        color: statusColor.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(Icons.medication_rounded, color: statusColor),
@@ -531,16 +524,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   builder: (ctx) => const AddMedicationScreen(),
                 ),
               );
+
+              if (!context.mounted) return;
+
               if (result == true) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Medicamento creado correctamente'),
-                      backgroundColor: Colors.teal,
-                    ),
-                  );
-                  _loadData();
-                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Medicamento creado correctamente'),
+                    backgroundColor: Colors.teal,
+                  ),
+                );
+                _loadData();
               }
             },
           ),

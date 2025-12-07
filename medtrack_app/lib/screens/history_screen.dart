@@ -16,7 +16,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   void initState() {
     super.initState();
-    _intakesFuture = Provider.of<MedicationService>(context, listen: false).fetchAllIntakes();
+    _intakesFuture = Provider.of<MedicationService>(
+      context,
+      listen: false,
+    ).fetchAllIntakes();
   }
 
   Color _getStatusColor(String status) {
@@ -34,7 +37,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Historial de Tomas'),
@@ -76,8 +78,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
               final intake = intakes[index];
               final dateStr = intake['fecha_programada'];
               final date = DateTime.parse(dateStr).toLocal();
-              
-              final medicationName = intake['medicamento_nombre'] ?? 'Desconocido';
+
+              final medicationName =
+                  intake['medicamento_nombre'] ?? 'Desconocido';
               final status = intake['estado'] ?? 'PENDIENTE';
               final formattedDate = DateFormat('dd/MM/yyyy HH:mm').format(date);
               final statusColor = _getStatusColor(status);
@@ -96,7 +99,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.1),
+                          color: statusColor.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -121,9 +124,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             Row(
                               children: [
                                 Icon(
-                                  Icons.calendar_today, 
-                                  size: 14, 
-                                  color: Colors.grey[600]
+                                  Icons.calendar_today,
+                                  size: 14,
+                                  color: Colors.grey[600],
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
@@ -140,14 +143,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12, 
-                          vertical: 6
+                          horizontal: 12,
+                          vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.1),
+                          color: statusColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: statusColor.withOpacity(0.5)
+                            color: statusColor.withValues(alpha: 0.5),
                           ),
                         ),
                         child: Text(

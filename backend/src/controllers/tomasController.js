@@ -80,10 +80,22 @@ export const registrarToma = async (req, res) => {
             tomaId = tomaRes.rows[0].id;
         }
 
-        await client.query(
-            'INSERT INTO historial (toma_id, fecha_real, cumplimiento) VALUES ($1, $2, $3);',
-            [tomaId, fecha_hora, status === 'TOMADO']
+        const existingHistorial = await client.query(
+            'SELECT id FROM historial WHERE toma_id = $1',
+            [tomaId]
         );
+
+        if (existingHistorial.rows.length > 0) {
+            await client.query(
+                'UPDATE historial SET fecha_real = $1, cumplimiento = $2 WHERE id = $3',
+                [fecha_hora, status === 'TOMADO', existingHistorial.rows[0].id]
+            );
+        } else {
+            await client.query(
+                'INSERT INTO historial (toma_id, fecha_real, cumplimiento) VALUES ($1, $2, $3);',
+                [tomaId, fecha_hora, status === 'TOMADO']
+            );
+        }
 
         await client.query('COMMIT');
         res.status(201).json({ message: 'Toma registrada/actualizada exitosamente', tomaId });

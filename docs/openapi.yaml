@@ -1,0 +1,27 @@
+openapi: 3.0.0
+info:
+  title: MedTrack API
+  description: API para la gestión de medicamentos y seguimiento de tomas.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Servidor de Desarrollo Local
+paths:
+  /medicamentos:
+    get:
+      summary: Obtener medicamentos
+      responses:
+        '200':
+          description: Lista de medicamentos
+  /tomas/registrar:
+    post:
+      summary: Registrar una toma
+      responses:
+        '201':
+          description: Toma registrada exitosamente
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -1,14 +1,14 @@
 ```mermaid
-C4Context
-title Sistema de Seguimiento de Medicamentos - Contexto
+flowchart TB
+    User("👤 Usuario Paciente")
+    System("📱 Sistema MedTrack")
+    EmailSys("📧 Sistema de Correo (Futuro)")
 
-Person(usuario, "Usuario", "Persona que necesita recordar y registrar sus medicamentos")
-System(systema, "MedTrack Service", "Microservicio para seguimiento de medicamentos")
-
-System_Ext(movil, "App Móvil", "Aplicación Flutter que consume el microservicio")
-System_Ext(db, "PostgreSQL", "Base de datos relacional para persistencia")
-
-Rel(usuario, movil, "Usa")
-Rel(movil, systema, "Consume API REST")
-Rel(systema, db, "Lee/Escribe datos")
+    User -->|Usa la App para registrar y consultar| System
+    System -->|Envía notificaciones push locales| User
+    System -.->|Envía correos de recuperación| EmailSys
+    
+    style User fill:#08427b,stroke:#052e56,color:#fff
+    style System fill:#1168bd,stroke:#0b4884,color:#fff
+    style EmailSys fill:#999999,stroke:#666666,color:#fff,stroke-dasharray: 5 5
 ```

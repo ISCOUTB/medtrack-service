@@ -1,17 +1,23 @@
 ```mermaid
-C4Container
-title Sistema de Seguimiento de Medicamentos - Contenedores
+flowchart TB
+    subgraph Client [📱 Cliente Móvil]
+        direction TB
+        App("Flutter App")
+        LocalDB[("💾 SharedPreferences")]
+    end
 
-Person(usuario, "Usuario")
+    subgraph Backend [☁️ Servidor Backend]
+        direction TB
+        API("⚙️ API REST (Node.js)")
+        DB[("🗄️ PostgreSQL")]
+    end
 
-System_Boundary(medtrack, "MedTrack Service") {
-  Container(api, "API REST", "Node.js + Express", "Expone endpoints para medicamentos y tomas")
-  Container(db, "Base de Datos", "PostgreSQL", "Almacena medicamentos, tomas y registros")
-}
+    App <-->|HTTPS/JSON| API
+    App <-->|Lee/Escribe| LocalDB
+    API <-->|SQL/TCP| DB
 
-Container(movil, "App Móvil", "Flutter", "Interfaz para el usuario")
-
-Rel(usuario, movil, "Usa")
-Rel(movil, api, "Consume API REST")
-Rel(api, db, "Lee/Escribe datos")
+    style App fill:#1168bd,stroke:#0b4884,color:#fff
+    style API fill:#1168bd,stroke:#0b4884,color:#fff
+    style LocalDB fill:#2f95d7,stroke:#206897,color:#fff
+    style DB fill:#2f95d7,stroke:#206897,color:#fff
 ```
